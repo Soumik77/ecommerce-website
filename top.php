@@ -129,8 +129,9 @@ if($mypage=='thank_you.php'){
 												<li><a href="categories.php?id=<?php echo $list['id']?>"><?php echo $list['categories']?></a></li>
 												<?php
 											}
-											?>
-                                            <li><a href="contact.php">contact</a></li>
+											 ?>
+                                            <!-- // <li><a href="contact.php">contact</a></li> -->
+                                            <li> <a href="admin/login.php">Admin</a></li>
                                         </ul>
                                     </nav>
                                 </div>  
@@ -161,6 +162,7 @@ if($mypage=='thank_you.php'){
 										<?php } ?>
                                         <a href="cart.php"><i class="icon-handbag icons"></i></a>
                                         <a href="cart.php"><span class="htc__qua"><?php echo $totalProduct?></span></a>
+                                       
                                     </div>
                                 </div>
                             </div>
