@@ -1,0 +1,16 @@
+.DS_Store
+config.local.php
+.env
+.env.*
+!.env.example
+*.log
+vendor/
+node_modules/
+admin/upload/*
+!admin/upload/demo-shirt.svg
+!admin/upload/demo-bag.svg
+!admin/upload/demo-shoes.svg
+database/*.sql
+!database/ecom.sql
+.idea/
+.vscode/

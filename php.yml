@@ -1,0 +1,51 @@
+name: PHP and MySQL checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: portfolio-ci-only
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: ecommerce_portfolio_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pportfolio-ci-only"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: ecommerce_portfolio_test
+      DB_USER: root
+      DB_PASSWORD: portfolio-ci-only
+      APP_URL: http://127.0.0.1:8000/
+      ECOM_ALLOW_INTEGRATION_TESTS: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install PHP runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y php8.3-cli php8.3-mysql
+      - name: Check PHP syntax
+        run: git ls-files '*.php' | xargs -n 1 php8.3 -l
+      - name: Check validation helpers
+        run: php8.3 tests/run.php
+      - name: Create isolated synthetic database
+        run: php8.3 scripts/setup_demo.php
+      - name: Check MySQL behavior and rollback
+        run: php8.3 tests/integration.php
+      - name: Check HTTP workflows
+        run: |
+          php8.3 -S 127.0.0.1:8000 router.php > php-server.log 2>&1 &
+          python3 tests/http_smoke.py

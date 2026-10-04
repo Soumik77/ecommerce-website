@@ -1,0 +1,9 @@
+Options -Indexes
+<FilesMatch "(^\.|^config\.|\.inc\.php$|\.(sql|md|log|yml|yaml|json)$)">
+    Require all denied
+</FilesMatch>
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(includes|database|scripts|tests)(/|$) - [F,L]
+    RewriteRule ^admin/upload/.*\.(php|phtml|phar)$ - [F,L,NC]
+</IfModule>
