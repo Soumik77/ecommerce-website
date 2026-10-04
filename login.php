@@ -1,4 +1,4 @@
-<?php 
+<?php
 require('top.php');
 if(isset($_SESSION['USER_LOGIN']) && $_SESSION['USER_LOGIN']=='yes'){
 	?>
@@ -27,7 +27,7 @@ if(isset($_SESSION['USER_LOGIN']) && $_SESSION['USER_LOGIN']=='yes'){
             </div>
         </div>
         <!-- End Bradcaump area -->
-        
+
 		<!-- Start Contact Area -->
         <section class="htc__contact__area ptb--100 bg__white">
             <div class="container">
@@ -53,7 +53,7 @@ if(isset($_SESSION['USER_LOGIN']) && $_SESSION['USER_LOGIN']=='yes'){
 										</div>
 										<span class="field_error" id="login_password_error"></span>
 									</div>
-									
+
 									<div class="contact-btn">
 										<button type="button" class="fv-btn" onclick="user_login()">Login</button>
 										<a class="forget_password" href="forgot_password.php"style="color:blue;">Forget Password</a>
@@ -63,10 +63,10 @@ if(isset($_SESSION['USER_LOGIN']) && $_SESSION['USER_LOGIN']=='yes'){
 									<p class="form-messege field_error"></p>
 								</div>
 							</div>
-						</div> 
-                
+						</div>
+
 				</div>
-				
+
 
 					<div class="col-md-6">
 						<div class="contact-form-wrap mt--60">
@@ -101,7 +101,7 @@ if(isset($_SESSION['USER_LOGIN']) && $_SESSION['USER_LOGIN']=='yes'){
 										</div>
 										<span class="field_error" id="password_error"></span>
 									</div>
-									
+
 									<div class="contact-btn">
 										<button type="button" class="fv-btn" onclick="user_register()">Register</button>
 									</div>
@@ -110,10 +110,10 @@ if(isset($_SESSION['USER_LOGIN']) && $_SESSION['USER_LOGIN']=='yes'){
 									<p class="form-messege field_error"></p>
 								</div>
 							</div>
-						</div> 
-                
+						</div>
+
 				</div>
-					
+
             </div>
         </section>
-<?php require('footer.php')?>        
+<?php require('footer.php')?>

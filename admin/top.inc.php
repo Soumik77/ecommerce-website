@@ -1,29 +1,8 @@
-
-
 <?php
-require('connection.inc.php');
-require('functions.inc.php');
-
-
-if(isset($_SESSION['ADMIN_LOGIN']) && $_SESSION['ADMIN_LOGIN']!='')
-{
-    $_SESSION['ADMIN_LOGIN'] = 'yes';
-    $_SESSION['ADMIN_USERNAME'] = $username;
-}
-else{ 
-    header('location:login.php');
-    die();
- }
-        
-
-
-
-
+require_once __DIR__ . '/connection.inc.php';
+require_once __DIR__ . '/functions.inc.php';
+require_admin();
 ?>
-
-
-
-
 <!doctype html>
 <html class="no-js" lang="">
    <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
@@ -84,7 +63,7 @@ else{
                   <div class="user-area dropdown float-right">
                      <a href="#" class="dropdown-toggle active" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style="color: purple; font-wight:700">Welcome Admin</a>
                      <div class="user-menu dropdown-menu">
-                        <a class="nav-link" href="logout.php"><i class="fa fa-power-off"></i>Logout</a>
+                        <form action="logout.php" method="post"><?php echo csrf_field(); ?><button type="submit" class="btn btn-link">Logout</button></form>
                      </div>
                   </div>
                </div>

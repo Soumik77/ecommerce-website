@@ -1,19 +1,13 @@
 <?php
-require('connection.inc.php');
-require('functions.inc.php');
-
-$email=get_safe_value($con,$_POST['email']);
-$password=get_safe_value($con,$_POST['password']);
-
-$res=mysqli_query($con,"select * from users where email='$email' and password='$password'");
-$check_user=mysqli_num_rows($res);
-if($check_user>0){
-	$row=mysqli_fetch_assoc($res);
-	$_SESSION['USER_LOGIN']='yes';
-	$_SESSION['USER_ID']=$row['id'];
-	$_SESSION['USER_NAME']=$row['name'];
-	echo "valid";
-}else{
-	echo "wrong";
-}
-?>
+require_once __DIR__ . '/connection.inc.php';
+require_csrf();
+$email = strtolower(input_string($_POST, 'email', 190));
+$password = $_POST['password'] ?? '';
+if (!is_string($password) || strlen($password) > 72 || str_contains($password, "\0")) { echo 'wrong'; exit; }
+$user = db_one('SELECT id, name, password FROM users WHERE email = ? AND status = 1', [$email]);
+if (!$user || !password_verify($password, $user['password'])) { echo 'wrong'; exit; }
+session_regenerate_id(true);
+$_SESSION['USER_LOGIN'] = 'yes';
+$_SESSION['USER_ID'] = (int) $user['id'];
+$_SESSION['USER_NAME'] = $user['name'];
+echo 'valid';

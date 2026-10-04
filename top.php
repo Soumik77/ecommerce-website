@@ -1,60 +1,35 @@
 <?php
-require('connection.inc.php');
-require('functions.inc.php');
-require('add_to_cart.inc.php');
-$cat_res=mysqli_query($con,"select * from categories where status=1 order by categories asc");
-$cat_arr=array();
-while($row=mysqli_fetch_assoc($cat_res)){
-	$cat_arr[]=$row;	
+require_once __DIR__ . '/connection.inc.php';
+require_once __DIR__ . '/functions.inc.php';
+require_once __DIR__ . '/add_to_cart.inc.php';
+$cat_arr = db_query('SELECT * FROM categories WHERE status = 1 ORDER BY categories')->fetch_all(MYSQLI_ASSOC);
+$obj = new add_to_cart();
+$totalProduct = $obj->totalProduct();
+$wishlist_count = 0;
+if (isset($_SESSION['USER_ID'])) {
+    $wishlist_count = db_one('SELECT COUNT(*) AS count FROM wishlist WHERE user_id = ?', [(int) $_SESSION['USER_ID']])['count'];
 }
-
-$obj=new add_to_cart();
-$totalProduct=$obj->totalProduct();
-
-
-if(isset($_SESSION['USER_LOGIN'])){
-	$uid=$_SESSION['USER_ID'];
-	
-	if(isset($_GET['wishlist_id'])){
-		$wid=get_safe_value($con,$_GET['wishlist_id']);
-		mysqli_query($con,"delete from wishlist where id='$wid' and user_id='$uid'");
-	}
-
-	$wishlist_count=mysqli_num_rows(mysqli_query($con,"select product.name,product.image,product.price,product.mrp,wishlist.id from product,wishlist where wishlist.product_id=product.id and wishlist.user_id='$uid'"));
-}
-$script_name = $_SERVER['SCRIPT_NAME'];
-$script_name_arr = explode('/',$script_name);
-$mypage = $script_name_arr[count($script_name_arr)-1];
- 
+$mypage = basename($_SERVER['SCRIPT_NAME'] ?? '');
 $meta_title = 'Delight Fashion';
-$meta_desc =   'Delight Fashion';
-$meta_keyword = 'Delight Fashion';
-if ($mypage=='product.php'){
-    $product_id = get_safe_value($con, $_GET['id']);
-    $product_meta= mysqli_fetch_assoc(mysqli_query($con, "select * from product where id='$product_id'"));
-    $meta_title = $product_meta['meta_title'];
-    $meta_desc = $product_meta['meta_desc'];
-    $meta_keyword = $product_meta['meta_keyword'];
+$meta_desc = 'A demonstration catalog and order-management application.';
+$meta_keyword = 'catalog, products';
+if ($mypage === 'product.php') {
+    $id = filter_var($_GET['id'] ?? '', FILTER_VALIDATE_INT);
+    $product_meta = $id ? db_one('SELECT meta_title, meta_desc, meta_keyword FROM product WHERE id = ? AND status = 1', [$id]) : null;
+    if ($product_meta) {
+        $meta_title = $product_meta['meta_title']; $meta_desc = $product_meta['meta_desc']; $meta_keyword = $product_meta['meta_keyword'];
+    }
 }
-if($mypage=='contact.php'){
-    $meta_title = 'Contact Us';
-
-}
-if($mypage=='thank_you.php'){
-    $meta_title = 'Thank You';
-    
-}
-   
-
 ?>
 <!doctype html>
 <html class="no-js" lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="csrf-token" content="<?php echo h(csrf_token()); ?>">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title><?php echo $meta_title ?></title>
-    <meta name="description" content="<?php echo $meta_desc?>">
-    <meta name="keywords" content="<?php echo $meta_keyword?>">
+    <title><?php echo h($meta_title); ?></title>
+    <meta name="description" content="<?php echo h($meta_desc); ?>">
+    <meta name="keywords" content="<?php echo h($meta_keyword); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/owl.carousel.min.css">
@@ -76,21 +51,21 @@ if($mypage=='thank_you.php'){
             position:absolute;
             right:15px;
 
-            
+
             width: 17px;
             text-align: center;
-            
+
             top: -4px;
-           
-            
+
+
         }
     </style>
-    
+
 </head>
 <body>
     <!--[if lt IE 8]>
         <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
-    <![endif]-->  
+    <![endif]-->
 
     <!-- Body main wrapper start -->
     <div class="wrapper">
@@ -99,7 +74,7 @@ if($mypage=='thank_you.php'){
                 <div class="container">
                     <div class="row">
                         <div class="menumenu__container clearfix">
-                            <div class="col-lg-2 col-md-2 col-sm-3 col-xs-5"> 
+                            <div class="col-lg-2 col-md-2 col-sm-3 col-xs-5">
                                 <div class="logo">
                                      <a href="index.php"><img src="images/logo-last.png" alt="" srcset=""></a>
                                 </div>
@@ -111,7 +86,7 @@ if($mypage=='thank_you.php'){
                                         <?php
 										foreach($cat_arr as $list){
 											?>
-											<li><a href="categories.php?id=<?php echo $list['id']?>"><?php echo $list['categories']?></a></li>
+											<li><a href="categories.php?id=<?php echo h($list['id']); ?>"><?php echo h($list['categories']); ?></a></li>
 											<?php
 										}
 										?>
@@ -126,7 +101,7 @@ if($mypage=='thank_you.php'){
                                             <?php
 											foreach($cat_arr as $list){
 												?>
-												<li><a href="categories.php?id=<?php echo $list['id']?>"><?php echo $list['categories']?></a></li>
+												<li><a href="categories.php?id=<?php echo h($list['id']); ?>"><?php echo h($list['categories']); ?></a></li>
 												<?php
 											}
 											 ?>
@@ -134,7 +109,7 @@ if($mypage=='thank_you.php'){
                                             <li> <a href="admin/login.php">Admin</a></li>
                                         </ul>
                                     </nav>
-                                </div>  
+                                </div>
                             </div>
                             <div class="col-md-3 col-lg-3 col-sm-6 col-xs-6">
                                 <div class="header__right">
@@ -142,27 +117,27 @@ if($mypage=='thank_you.php'){
                                         <a href="#"><i class="icon-magnifier icons"></i></a>
                                 </div>
                                     <div class="header__account">
-                                        <?php 
+                                        <?php
                                         if(isset($_SESSION['USER_LOGIN'])){
-                                            echo '<a href="logout.php">Logout</a><br><a href="my_order.php">My Order</a>';
+                                            echo '<form action="logout.php" method="post" style="display:inline">' . csrf_field() . '<button type="submit">Logout</button></form><br><a href="my_order.php">My Order</a>';
 
                                         }else{
                                             echo '<a href="login.php">Login/Register</a>';
 
                                         }
                                         ?>
-                                       
+
                                     </div>
                                     <div class="htc__shopping__cart">
 										<?php
 										if(isset($_SESSION['USER_ID'])){
 										?>
 										<a href="wishlist.php"><i class="icon-heart icons"></i></a>
-                                        <a href="wishlist.php"><span class="htc__wishlist"><?php echo $wishlist_count?></span></a>
+                                        <a href="wishlist.php"><span class="htc__wishlist"><?php echo h($wishlist_count); ?></span></a>
 										<?php } ?>
                                         <a href="cart.php"><i class="icon-handbag icons"></i></a>
-                                        <a href="cart.php"><span class="htc__qua"><?php echo $totalProduct?></span></a>
-                                       
+                                        <a href="cart.php"><span class="htc__qua"><?php echo h($totalProduct); ?></span></a>
+
                                     </div>
                                 </div>
                             </div>
@@ -172,7 +147,7 @@ if($mypage=='thank_you.php'){
                 </div>
             </div>
         </header>
-        		<div class="body__overlay"></div>
+        <div class="body__overlay"></div>
 		<div class="offset__wrapper">
             <div class="search__area">
                 <div class="container">

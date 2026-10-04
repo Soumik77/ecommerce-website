@@ -1,222 +1,62 @@
 <?php
-
-require('top.inc.php');
-$categories_id='';
-$name='';
-$mrp='';
-$price='';
-$qty='';
-$image='';
-$short_desc	='';
-$description	='';
-$meta_title	='';
-$meta_desc	='';
-$meta_keyword='';
-$best_seller='';
-
-$msg='';
-$image_required='required';
-
-
-
-
-if(isset($_GET['id']) && $_GET['id']!=''){
-	$image_required='';
-	$id=get_safe_value($con,$_GET['id']);
-	$res=mysqli_query($con,"select * from product where id='$id'");
-	$check=mysqli_num_rows($res);
-	if($check>0){
-		$row=mysqli_fetch_assoc($res);
-		$categories_id=$row['categories_id'];
-		$name=$row['name'];
-		$mrp=$row['mrp'];
-		$price=$row['price'];
-		$qty=$row['qty'];
-		$short_desc=$row['short_desc'];
-		$description=$row['description'];
-		$meta_title=$row['meta_title'];
-		$meta_desc=$row['meta_desc'];
-		$meta_keyword=$row['meta_keyword'];
-		$best_seller = $row['best_seller'];
-	}else{
-		header('location:product.php');
-		die();
-	}
+require_once 'connection.inc.php';
+require_admin();
+$id = isset($_GET['id']) ? positive_int($_GET['id']) : 0;
+$defaults = ['categories_id' => '', 'name' => '', 'mrp' => '0.00', 'price' => '0.00', 'qty' => 0, 'image' => 'demo-shirt.svg', 'short_desc' => '', 'description' => '', 'meta_title' => '', 'meta_desc' => '', 'meta_keyword' => '', 'best_seller' => 0];
+$product = $id ? db_one('SELECT * FROM product WHERE id = ?', [$id]) : $defaults;
+if (!$product) { http_response_code(404); exit('Product not found.'); }
+$message = '';
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    require_csrf();
+    $newImage = null;
+    try {
+        foreach (['name' => 150, 'short_desc' => 2100, 'description' => 10000, 'meta_title' => 255, 'meta_desc' => 2000, 'meta_keyword' => 2000] as $key => $limit) $product[$key] = input_string($_POST, $key, $limit);
+        if ($product['name'] === '') throw new InvalidArgumentException('Enter a product name.');
+        $product['categories_id'] = positive_int($_POST['categories_id'] ?? null);
+        if (!db_one('SELECT id FROM categories WHERE id = ?', [$product['categories_id']])) throw new InvalidArgumentException('Select a valid category.');
+        $product['price'] = money_string(money_cents(input_string($_POST, 'price', 20)));
+        $product['mrp'] = money_string(money_cents(input_string($_POST, 'mrp', 20)));
+        $quantity = filter_var($_POST['qty'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 1000000]]);
+        if ($quantity === false) throw new InvalidArgumentException('Stock must be a non-negative whole number.');
+        $product['qty'] = $quantity;
+        $product['best_seller'] = isset($_POST['best_seller']) ? 1 : 0;
+        $upload = $_FILES['image'] ?? null;
+        if ($upload && $upload['error'] !== UPLOAD_ERR_NO_FILE) {
+            if ($upload['error'] !== UPLOAD_ERR_OK || $upload['size'] > 4 * 1024 * 1024 || !is_uploaded_file($upload['tmp_name'])) throw new InvalidArgumentException('Upload a JPEG or PNG image smaller than 4 MB.');
+            $mime = (new finfo(FILEINFO_MIME_TYPE))->file($upload['tmp_name']);
+            $extension = ['image/jpeg' => 'jpg', 'image/png' => 'png'][$mime] ?? null;
+            if (!$extension || getimagesize($upload['tmp_name']) === false) throw new InvalidArgumentException('Upload a valid JPEG or PNG image.');
+            $newImage = bin2hex(random_bytes(16)) . '.' . $extension;
+            if (!move_uploaded_file($upload['tmp_name'], PRODUCT_IMAGE_SERVER_PATH . $newImage)) throw new RuntimeException('Image could not be saved.');
+            $product['image'] = $newImage;
+        }
+        $fields = ['categories_id','name','mrp','price','qty','image','short_desc','description','meta_title','meta_desc','meta_keyword','best_seller'];
+        $values = array_map(fn ($field) => $product[$field], $fields);
+        if ($id) {
+            $values[] = $id;
+            db_query('UPDATE product SET categories_id=?, name=?, mrp=?, price=?, qty=?, image=?, short_desc=?, description=?, meta_title=?, meta_desc=?, meta_keyword=?, best_seller=? WHERE id=?', $values);
+        } else {
+            db_query('INSERT INTO product (categories_id,name,mrp,price,qty,image,short_desc,description,meta_title,meta_desc,meta_keyword,best_seller) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', $values);
+        }
+        redirect_to('admin/product.php');
+    } catch (Throwable $error) {
+        if ($newImage) @unlink(PRODUCT_IMAGE_SERVER_PATH . $newImage);
+        if ($error instanceof InvalidArgumentException) $message = $error->getMessage();
+        else { error_log('Product save failed: ' . get_class($error)); $message = 'The product could not be saved.'; }
+    }
 }
-
-if(isset($_POST['submit'])){
-	$categories_id=get_safe_value($con,$_POST['categories_id']);
-	$name=get_safe_value($con,$_POST['name']);
-	$mrp=get_safe_value($con,$_POST['mrp']);
-	$price=get_safe_value($con,$_POST['price']);
-	$qty=get_safe_value($con,$_POST['qty']);
-	$short_desc=get_safe_value($con,$_POST['short_desc']);
-	$description=get_safe_value($con,$_POST['description']);
-	$meta_title=get_safe_value($con,$_POST['meta_title']);
-	$meta_desc=get_safe_value($con,$_POST['meta_desc']);
-	$meta_keyword=get_safe_value($con,$_POST['meta_keyword']);
-	$best_seller=get_safe_value($con,$_POST['best_seller']);
-
-	$res=mysqli_query($con,"select * from product where name='$name'");
-	$check=mysqli_num_rows($res);
-	if($check>0){
-		if(isset($_GET['id']) && $_GET['id']!=''){
-			$getData=mysqli_fetch_assoc($res);
-			if($id==$getData['id']){
-			
-			}else{
-				$msg="Product already exists";
-			}
-		}else{
-			$msg="Product already exists";
-		}
-	}
-	
-	
-	if($_GET['id']==0){
-		if($_FILES['image']['type']!='image/png' && $_FILES['image']['type']!='image/jpg' && $_FILES['image']['type']!='image/jpeg'){
-			$msg="Please select png,jpg and jpeg image formate only";
-		}
-	}else{
-		if($_FILES['image']['type']!=''){
-				if($_FILES['image']['type']!='image/png' && $_FILES['image']['type']!='image/jpg' && $_FILES['image']['type']!='image/jpeg'){
-				$msg="Please select png,jpg and jpeg image  formate only";
-			}
-		}
-	}
-	
-	if($msg==''){
-		if(isset($_GET['id']) && $_GET['id']!=''){
-			if($_FILES['image']['name']!=''){
-				$image=rand(111111111,999999999).'_'.$_FILES['image']['name'];
-				move_uploaded_file($_FILES['image']['tmp_name'],PRODUCT_IMAGE_SERVER_PATH.$image);
-				$update_sql="update product set categories_id='$categories_id',name='$name',mrp='$mrp',price='$price',qty='$qty',short_desc='$short_desc',description='$description',meta_title='$meta_title',meta_desc='$meta_desc',meta_keyword='$meta_keyword',best_seller='$best_seller', image='$image' where id='$id'";
-			}else{
-				$update_sql="update product set categories_id='$categories_id',name='$name', mrp='$mrp',price='$price',qty='$qty',short_desc='$short_desc',description='$description',meta_title='$meta_title',meta_desc='$meta_desc',meta_keyword='$meta_keyword',best_seller='$best_seller' where id='$id'";
-			}
-			mysqli_query($con,$update_sql);
-		}else{
-			$image=rand(111111111,999999999).'_'.$_FILES['image']['name'];
-			move_uploaded_file($_FILES['image']['tmp_name'],PRODUCT_IMAGE_SERVER_PATH.$image);
-			mysqli_query($con,"insert into product(categories_id,name,mrp,price,qty,short_desc,description,meta_title,meta_desc,meta_keyword,status,image,best_seller) values('$categories_id','$name','$mrp','$price','$qty','$short_desc','$description','$meta_title','$meta_desc','$meta_keyword',1,'$image','$best_seller')");
-		}
-		header('location:product.php');
-		die();
-	}
-} 
+$categories = db_query('SELECT id, categories FROM categories ORDER BY categories')->fetch_all(MYSQLI_ASSOC);
+require('top.inc.php');
 ?>
-<div class="content pb-0"style="">
-            <div class="animated fadeIn">
-               <div class="row">
-                  <div class="col-lg-12">
-                     <div class="card">
-                        <div class="card-header"><strong>Product</strong><small> Form</small></div>
-                        <form method="post" enctype="multipart/form-data">
-							<div class="card-body card-block">
-							   <div class="form-group">
-									<label for="categories" class=" form-control-label">Categories</label>
-									<select class="form-control" name="categories_id">
-										<option>Select Category</option>
-										<?php
-										$res=mysqli_query($con,"select id,categories from categories order by categories asc");
-										while($row=mysqli_fetch_assoc($res)){
-											if($row['id']==$categories_id){
-												echo "<option selected value=".$row['id'].">".$row['categories']."</option>";
-											}else{
-												echo "<option value=".$row['id'].">".$row['categories']."</option>";
-											}
-											
-										}
-										?>
-									</select>
-								</div>
-								<div class="form-group">
-									<label for="categories" class=" form-control-label">Product Name</label>
-									<input type="text" name="name" placeholder="Enter product name" class="form-control" required value="<?php echo $name?>">
-								</div>
-								<div class="form-group">
-									<label for="categories" class=" form-control-label">Best Seller</label>
-									<select class="form-control" name="best_seller" required>
-										<option value="">Select</option>
-										<?php 
-										if($best_seller==1){
-											echo '<option value="1" selected>Yes</option>
-											      <option value="0">No</option>';
-
-										}elseif($best_seller==0){
-											echo '<option value="1" >Yes</option>
-											      <option value="0" selected>No</option>';
-						
-										}
-										else {
-											echo '<option value="1">Yes</option>
-											      <option value="0">No</option>';
-
-										}
-										?>
-										
-									
-									
-									</select>
-								</div>
-								<div class="form-group">
-									<label for="categories" class=" form-control-label">MRP</label>
-									<input type="text" name="mrp" placeholder="Enter product mrp" class="form-control" required value="<?php echo $mrp?>">
-								</div>
-								
-								<div class="form-group">
-									<label for="categories" class=" form-control-label">Price</label>
-									<input type="text" name="price" placeholder="Enter product price" class="form-control" required value="<?php echo $price?>">
-								</div>
-								
-								<div class="form-group">
-									<label for="categories" class=" form-control-label">Quantity</label>
-									<input type="text" name="qty" placeholder="Enter qty" class="form-control" required value="<?php echo $qty?>">
-								</div>
-								
-								<div class="form-group">
-									<label for="categories" class=" form-control-label">Image</label>
-									<input type="file" name="image" class="form-control" <?php echo  $image_required?>>
-								</div>
-								
-								<div class="form-group">
-									<label for="categories" class=" form-control-label">Short Description</label>
-									<textarea name="short_desc" placeholder="Enter product short description" class="form-control" required><?php echo $short_desc?></textarea>
-								</div>
-								
-								<div class="form-group">
-									<label for="categories" class=" form-control-label">Description</label>
-									<textarea name="description" placeholder="Enter product description" class="form-control" required><?php echo $description?></textarea>
-								</div>
-								
-								<div class="form-group">
-									<label for="categories" class=" form-control-label">Meta Title</label>
-									<textarea name="meta_title" placeholder="Enter product meta title" class="form-control"><?php echo $meta_title?></textarea>
-								</div>
-								
-								<div class="form-group">
-									<label for="categories" class=" form-control-label">Meta Description</label>
-									<textarea name="meta_desc" placeholder="Enter product meta description" class="form-control"><?php echo $meta_desc?></textarea>
-								</div>
-								
-								<div class="form-group">
-									<label for="categories" class=" form-control-label">Meta Keyword</label>
-									<textarea name="meta_keyword" placeholder="Enter product meta keyword" class="form-control"><?php echo $meta_keyword?></textarea>
-								</div>
-								
-								
-							   <button id="payment-button" name="submit" type="submit" class="btn btn-lg btn-info btn-block">
-							   <span id="payment-button-amount" style="color:white;border-radius:10px">Submit</span>
-							   </button>
-							   <div class="field_error"><?php echo $msg?></div>
-							</div>
-						</form>
-                     </div>
-                  </div>
-               </div>
-            </div>
-         </div>
-         
-<?php
-require('footer.inc.php');
-?>
+<main class="content"><div class="card"><div class="card-body"><h1><?php echo $id ? 'Edit' : 'Add'; ?> product</h1>
+<p role="alert"><?php echo h($message); ?></p>
+<form method="post" enctype="multipart/form-data"><?php echo csrf_field(); ?>
+<p><label>Category <select class="form-control" name="categories_id" required><?php foreach ($categories as $category): ?><option value="<?php echo (int) $category['id']; ?>" <?php echo $category['id'] == $product['categories_id'] ? 'selected' : ''; ?>><?php echo h($category['categories']); ?></option><?php endforeach; ?></select></label></p>
+<?php foreach (['name' => 'Product name','mrp' => 'List price','price' => 'Selling price','qty' => 'Stock quantity','meta_title' => 'Page title','meta_desc' => 'Page description','meta_keyword' => 'Page keywords'] as $field => $label): ?>
+<p><label><?php echo h($label); ?><input class="form-control" name="<?php echo h($field); ?>" value="<?php echo h($product[$field]); ?>" <?php echo in_array($field, ['name','mrp','price','qty']) ? 'required' : ''; ?>></label></p><?php endforeach; ?>
+<p><label>Short description<textarea class="form-control" name="short_desc" maxlength="2100"><?php echo h($product['short_desc']); ?></textarea></label></p>
+<p><label>Description<textarea class="form-control" name="description" maxlength="10000"><?php echo h($product['description']); ?></textarea></label></p>
+<p><label><input type="checkbox" name="best_seller" value="1" <?php echo $product['best_seller'] ? 'checked' : ''; ?>> Featured product</label></p>
+<p><label>Image (optional JPEG or PNG, maximum 4 MB)<input type="file" name="image" accept="image/jpeg,image/png"></label></p>
+<button class="btn btn-primary" type="submit">Save product</button> <a href="product.php">Cancel</a>
+</form></div></div></main><?php require('footer.inc.php'); ?>

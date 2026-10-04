@@ -1,9 +1,6 @@
 <?php
-require('connection.inc.php');
-require('functions.inc.php');
-unset($_SESSION['USER_LOGIN']);
-unset($_SESSION['USER_ID']);
-unset($_SESSION['USER_NAME']);
-header('location:index.php');
-die();
-?>
+require_once __DIR__ . '/includes/bootstrap.php';
+require_csrf();
+unset($_SESSION['USER_LOGIN'], $_SESSION['USER_ID'], $_SESSION['USER_NAME'], $_SESSION['cart']);
+session_regenerate_id(true);
+redirect_to('index.php');

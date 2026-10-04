@@ -1,141 +1,41 @@
-function send_message() {
-    var name = jQuery("#name").val();
-    var email = jQuery("#email").val();
-    var mobile = jQuery("#mobile").val();
-    var message = jQuery("#message").val();
-
-    if (name == "") {
-        alert('Please enter name');
-    } else if (email == "") {
-        alert('Please enter email');
-    } else if (mobile == "") {
-        alert('Please enter mobile');
-    } else if (message == "") {
-        alert('Please enter message');
-    } else {
-        jQuery.ajax({
-            url: 'send_message.php',
-            type: 'post',
-            data: 'name=' + name + '&email=' + email + '&mobile=' + mobile + '&message=' + message,
-            success: function(result) {
-                alert(result);
-            }
-        });
-    }
-}
-
-function user_register() {
-    jQuery('.field_error').html('');
-    var name = jQuery("#name").val();
-    var email = jQuery("#email").val();
-    var mobile = jQuery("#mobile").val();
-    var password = jQuery("#password").val();
-    var is_error = '';
-    if (name == "") {
-        jQuery('#name_error').html('Please enter name');
-        is_error = 'yes';
-    }
-    if (email == "") {
-        jQuery('#email_error').html('Please enter email');
-        is_error = 'yes';
-    }
-    if (mobile == "") {
-        jQuery('#mobile_error').html('Please enter mobile number');
-        is_error = 'yes';
-    }
-    if (password == "") {
-        jQuery('#password_error').html('Please enter password');
-        is_error = 'yes';
-    }
-    if (is_error == '') {
-        jQuery.ajax({
-            url: 'register_submit.php',
-            type: 'post',
-            data: 'name=' + name + '&email=' + email + '&mobile=' + mobile + '&password=' + password,
-            success: function(result) {
-                if (result.trim() === 'email_present') {
-                    jQuery('#email_error').html('Email id already present');
-                } else if (result.trim() === 'insert') {
-                    jQuery('.register_msg p').html('Thank you for registration');
-
-
-                    jQuery('#register-form')[0].reset();
-
-                }
-            }
-        });
-    }
-
-}
-
-
-function user_login() {
-    jQuery('.field_error').html('');
-    var email = jQuery("#login_email").val();
-    var password = jQuery("#login_password").val();
-    var is_error = '';
-    if (email == "") {
-        jQuery('#login_email_error').html('Please enter email');
-        is_error = 'yes';
-    }
-    if (password == "") {
-        jQuery('#login_password_error').html('Please enter password');
-        is_error = 'yes';
-    }
-    if (is_error == '') {
-        jQuery.ajax({
-            url: 'login_submit.php',
-            type: 'post',
-            data: 'email=' + email + '&password=' + password,
-            success: function(result) {
-                if (result.trim() === 'wrong') {
-                    jQuery('.login_msg p').html('Please enter valid login details');
-                } else if (result.trim() === 'valid') {
-                    alert('Login Successful');
-                    window.location.href = window.location.href;
-                    document.getElementById('login-form').reset();
-                }
-            }
-        });
-    }
-}
-
-
-function manage_cart(pid, type) {
-    if (type == 'update') {
-        var qty = jQuery("#" + pid + "qty").val();
-    } else {
-        var qty = jQuery("#qty").val();
-    }
+/* Requests share the session's form token; jQuery encodes values safely. */
+function appPost(url, data, success) {
     jQuery.ajax({
-        url: 'manage_cart.php',
-        type: 'post',
-        data: 'pid=' + pid + '&qty=' + qty + '&type=' + type,
-        success: function(result) {
-            if (type == 'update' || type == 'remove') {
-                window.location.href = window.location.href;
-            }
-            jQuery('.htc__qua').html(result);
-        }
+        url: url, type: 'POST', data: data,
+        headers: { 'X-CSRF-Token': jQuery('meta[name="csrf-token"]').attr('content') },
+        success: success,
+        error: function (xhr) { alert(xhr.status < 500 ? xhr.responseText : 'The request could not be completed. Please try again.'); }
     });
 }
-
-function sort_product_drop(cat_id, site_path) {
-    var sort_product_id = jQuery('#sort_product_id').val();
-    window.location.href = site_path + "categories.php?id=" + cat_id + "&sort=" + sort_product_id;
+function send_message() {
+    appPost('send_message.php', { name: jQuery('#name').val(), email: jQuery('#email').val(), mobile: jQuery('#mobile').val(), message: jQuery('#message').val() }, function (result) { alert(result); });
 }
-
+function user_register() {
+    jQuery('.field_error').text('');
+    appPost('register_submit.php', { name: jQuery('#name').val(), email: jQuery('#email').val(), mobile: jQuery('#mobile').val(), password: jQuery('#password').val() }, function (result) {
+        if (result.trim() === 'email_present') jQuery('#email_error').text('Email already registered.');
+        else if (result.trim() === 'insert') { jQuery('.register_msg p').text('Registration complete. You can now sign in.'); jQuery('#register-form')[0].reset(); }
+    });
+}
+function user_login() {
+    appPost('login_submit.php', { email: jQuery('#login_email').val(), password: jQuery('#login_password').val() }, function (result) {
+        if (result.trim() === 'valid') window.location.href = 'my_order.php';
+        else jQuery('.login_msg p').text('Please enter valid login details.');
+    });
+}
+function manage_cart(pid, type) {
+    var quantity = type === 'update' ? jQuery('#' + pid + 'qty').val() : (jQuery('#qty').val() || '1');
+    appPost('manage_cart.php', { pid: pid, qty: quantity, type: type }, function (result) {
+        if (type === 'update' || type === 'remove') window.location.reload();
+        else jQuery('.htc__qua').text(result);
+    });
+}
+function sort_product_drop(cat_id, site_path) {
+    window.location.href = site_path + 'categories.php?id=' + encodeURIComponent(cat_id) + '&sort=' + encodeURIComponent(jQuery('#sort_product_id').val());
+}
 function wishlist_manage(pid, type) {
-    jQuery.ajax({
-        url: 'wishlist_manage.php',
-        type: 'post',
-        data: 'pid=' + pid + '&type=' + type,
-        success: function(result) {
-            if (result.trim() === 'not_login') {
-                window.location.href = 'login.php';
-            } else {
-                jQuery('.htc__wishlist').html(result);
-            }
-        }
+    appPost('wishlist_manage.php', { pid: pid, type: type }, function (result) {
+        if (result.trim() === 'not_login') window.location.href = 'login.php';
+        else jQuery('.htc__wishlist').text(result);
     });
 }

@@ -1,26 +1,12 @@
-<?php 
+<?php
+require_once 'connection.inc.php';
+require_once 'functions.inc.php';
+$product_id = filter_var($_GET['id'] ?? '', FILTER_VALIDATE_INT);
+$get_product = $product_id && $product_id > 0 ? get_product($con, '', '', $product_id) : [];
+if (!$get_product) { http_response_code(404); exit('Product not found.'); }
 require('top.php');
-if(isset($_GET['id'])){
-	$product_id=mysqli_real_escape_string($con,$_GET['id']);
-	if($product_id>0){
-		$get_product=get_product($con,'','',$product_id);
-	}else{
-		?>
-		<script>
-		window.location.href='index.php';
-		</script>
-		<?php
-	}
-}else{
-	?>
-	<script>
-	window.location.href='index.php';
-	</script>
-	<?php
-}
 ?>
-
- <!-- Start Bradcaump area -->
+<!-- Start Bradcaump area -->
         <div class="ht__bradcaump__area" style="background: rgba(0, 0, 0, 0) url(images/bg/4.jpg) no-repeat scroll center center / cover ;">
             <div class="ht__bradcaump__wrap">
                 <div class="container">
@@ -30,9 +16,9 @@ if(isset($_GET['id'])){
                                 <nav class="bradcaump-inner">
                                   <a class="breadcrumb-item" href="index.php">Home</a>
                                   <span class="brd-separetor"><i class="zmdi zmdi-chevron-right"></i></span>
-                                  <a class="breadcrumb-item" href="categories.php?id=<?php echo $get_product['0']['categories_id']?>"><?php echo $get_product['0']['categories']?></a>
+                                  <a class="breadcrumb-item" href="categories.php?id=<?php echo h($get_product['0']['categories_id']); ?>"><?php echo h($get_product['0']['categories']); ?></a>
                                   <span class="brd-separetor"><i class="zmdi zmdi-chevron-right"></i></span>
-                                  <span class="breadcrumb-item active"><?php echo $get_product['0']['name']?></span>
+                                  <span class="breadcrumb-item active"><?php echo h($get_product['0']['name']); ?></span>
                                 </nav>
                             </div>
                         </div>
@@ -53,28 +39,28 @@ if(isset($_GET['id'])){
                                 <div class="product__big__images">
                                     <div class="portfolio-full-image tab-content">
                                         <div role="tabpanel" class="tab-pane fade in active" id="img-tab-1">
-                                            <img src="<?php echo PRODUCT_IMAGE_SITE_PATH.$get_product['0']['image']?>" alt="full-image">
+                                            <img src="<?php echo h(PRODUCT_IMAGE_SITE_PATH.$get_product['0']['image']); ?>" alt="full-image">
                                         </div>
                                     </div>
                                 </div>
                                 <!-- End Product Big Images -->
-                                
+
                             </div>
                         </div>
                         <div class="col-md-7 col-lg-7 col-sm-12 col-xs-12 smt-40 xmt-40">
                             <div class="ht__product__dtl">
-                                <h2><?php echo $get_product['0']['name']?></h2>
+                                <h2><?php echo h($get_product['0']['name']); ?></h2>
                                 <ul  class="pro__prize">
-                                    <li class="old__prize">$<?php echo $get_product['0']['mrp']?></li>
-                                    <li>$<?php echo $get_product['0']['price']?></li>
+                                    <li class="old__prize">$<?php echo h($get_product['0']['mrp']); ?></li>
+                                    <li>$<?php echo h($get_product['0']['price']); ?></li>
                                 </ul>
-                                <p class="pro__info"><?php echo $get_product['0']['short_desc']?></p>
+                                <p class="pro__info"><?php echo h($get_product['0']['short_desc']); ?></p>
                                 <div class="ht__pro__desc">
                                     <div class="sin__desc">
                                         <p><span>Availability:</span> In Stock</p>
                                     </div>
 									<div class="sin__desc">
-                                        <p><span>Qty:</span> 
+                                        <p><span>Qty:</span>
 										<select id="qty">
 											<option>1</option>
 											<option>2</option>
@@ -92,14 +78,14 @@ if(isset($_GET['id'])){
                                     <div class="sin__desc align--left">
                                         <p><span>Categories:</span></p>
                                         <ul class="pro__cat__list">
-                                            <li><a href="#"><?php echo $get_product['0']['categories']?></a></li>
+                                            <li><a href="#"><?php echo h($get_product['0']['categories']); ?></a></li>
                                         </ul>
                                     </div>
-                                    
+
                                     </div>
-									
+
                                 </div>
-								<a class="fr__btn" href="javascript:void(0)" onclick="manage_cart('<?php echo $get_product['0']['id']?>','add')">Add to cart</a>
+								<a class="fr__btn" href="javascript:void(0)" onclick="manage_cart('<?php echo h($get_product['0']['id']); ?>','add')">Add to cart</a>
                             </div>
                         </div>
                     </div>
@@ -107,7 +93,7 @@ if(isset($_GET['id'])){
             </div>
             <!-- End Product Details Top -->
         </section>
-        <!-- End Product Details Area 
+        <!-- End Product Details Area
 		<!-- Start Product Description -->
         <section class="htc__produc__decription bg__white">
             <div class="container">
@@ -126,17 +112,17 @@ if(isset($_GET['id'])){
                             <!-- Start Single Content -->
                             <div role="tabpanel" id="description" class="pro__single__content tab-pane fade in active">
                                 <div class="pro__tab__content__inner">
-                                    <?php echo $get_product['0']['description']?>
+                                    <?php echo h($get_product['0']['description']); ?>
                                 </div>
                             </div>
                             <!-- End Single Content -->
-                            
+
                         </div>
                     </div>
                 </div>
             </div>
         </section>
         <!-- End Product Description -->
-        
-										
-<?php require('footer.php')?>        
+
+
+<?php require('footer.php')?>

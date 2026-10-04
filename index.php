@@ -1,6 +1,6 @@
 <?php require('top.php')?>
 <div class="body__overlay"></div>
-        
+
         <!-- Start Slider Area -->
         <div class="slider__container slider--one bg__cat--3">
             <div class="slide__container slider__activation__wrap owl-carousel">
@@ -39,7 +39,7 @@
                                         <h2>COLLECTION <?php echo date('Y'); ?></h2>
                                         <h1 style="font-size: 40px;" >Elevate Your Wardrobe</h1>
                                         <p>Men's Fashion Hub for Shirts, Sweaters, and Hoodies!</p>
-                            
+
                                         <div class="cr__btn"style="margin-top: 10px;">
                                             <a href="cart.php">OrderNow</a>
                                         </div>
@@ -65,7 +65,7 @@
                                         <h2>COLLECTION <?php echo date('Y'); ?></h2>
                                         <h1 style="font-size: 40px;" >Elevate Your Style: Dive into Denim Delights!</h1>
                                         <p>Discover the Perfect Fit with Our Exclusive Jeans Collection. From Classic Blues to Trendsetting Styles, Embrace Fashion Freedom. Shop Now for Jeans That Redefine Comfort and Confidence!</p>
-                            
+
                                         <div class="cr__btn"style="margin-top: 10px;">
                                             <a href="cart.php">OrderNow</a>
                                         </div>
@@ -107,22 +107,22 @@
                             <div class="col-md-4 col-lg-3 col-sm-4 col-xs-12">
                                 <div class="category">
                                     <div class="ht__cat__thumb">
-                                        <a href="product.php?id=<?php echo $list['id']?>">
-                                            <img src="<?php echo PRODUCT_IMAGE_SITE_PATH.$list['image']?>" alt="product images">
+                                        <a href="product.php?id=<?php echo h($list['id']); ?>">
+                                            <img src="<?php echo h(PRODUCT_IMAGE_SITE_PATH.$list['image']); ?>" alt="product images">
                                         </a>
                                     </div>
                                     <div class="fr__hover__info">
 										<ul class="product__action">
-											<li><a href="javascript:void(0)" onclick="wishlist_manage('<?php echo $list['id']?>','add')"><i class="icon-heart icons"></i></a></li>
-											<li><a href="javascript:void(0)" onclick="manage_cart('<?php echo $list['id']?>','add')"><i class="icon-handbag icons"></i></a></li>
+											<li><a href="javascript:void(0)" onclick="wishlist_manage('<?php echo h($list['id']); ?>','add')"><i class="icon-heart icons"></i></a></li>
+											<li><a href="javascript:void(0)" onclick="manage_cart('<?php echo h($list['id']); ?>','add')"><i class="icon-handbag icons"></i></a></li>
 										</ul>
 									</div>
-                                    
+
                                     <div class="fr__product__inner">
-                                        <h4><a href="product.php?id=<?php echo $list['id']?>"><?php echo $list['name']?></a></h4>
+                                        <h4><a href="product.php?id=<?php echo h($list['id']); ?>"><?php echo h($list['name']); ?></a></h4>
                                         <ul class="fr__pro__prize">
-                                            <li class="old__prize">$<?php echo $list['mrp']?></li>
-                                            <li>$<?php echo $list['price']?></li>
+                                            <li class="old__prize">$<?php echo h($list['mrp']); ?></li>
+                                            <li>$<?php echo h($list['price']); ?></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -156,22 +156,22 @@
                             <div class="col-md-4 col-lg-3 col-sm-4 col-xs-12">
                                 <div class="category">
                                     <div class="ht__cat__thumb">
-                                        <a href="product.php?id=<?php echo $list['id']?>">
-                                            <img src="<?php echo PRODUCT_IMAGE_SITE_PATH.$list['image']?>" alt="product images">
+                                        <a href="product.php?id=<?php echo h($list['id']); ?>">
+                                            <img src="<?php echo h(PRODUCT_IMAGE_SITE_PATH.$list['image']); ?>" alt="product images">
                                         </a>
                                     </div>
                                     <div class="fr__hover__info">
 										<ul class="product__action">
-											<li><a href="javascript:void(0)" onclick="wishlist_manage('<?php echo $list['id']?>','add')"><i class="icon-heart icons"></i></a></li>
-											<li><a href="javascript:void(0)" onclick="manage_cart('<?php echo $list['id']?>','add')"><i class="icon-handbag icons"></i></a></li>
+											<li><a href="javascript:void(0)" onclick="wishlist_manage('<?php echo h($list['id']); ?>','add')"><i class="icon-heart icons"></i></a></li>
+											<li><a href="javascript:void(0)" onclick="manage_cart('<?php echo h($list['id']); ?>','add')"><i class="icon-handbag icons"></i></a></li>
 										</ul>
 									</div>
-                                    
+
                                     <div class="fr__product__inner">
-                                        <h4><a href="product.php?id=<?php echo $list['id']?>"><?php echo $list['name']?></a></h4>
+                                        <h4><a href="product.php?id=<?php echo h($list['id']); ?>"><?php echo h($list['name']); ?></a></h4>
                                         <ul class="fr__pro__prize">
-                                            <li class="old__prize">$<?php echo $list['mrp']?></li>
-                                            <li>$<?php echo $list['price']?></li>
+                                            <li class="old__prize">$<?php echo h($list['mrp']); ?></li>
+                                            <li>$<?php echo h($list['price']); ?></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -183,4 +183,4 @@
             </div>
         </section>
         <!-- End Product Area -->
-<?php require('footer.php')?>        
+<?php require('footer.php')?>

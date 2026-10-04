@@ -8,7 +8,7 @@
                             <div class="footer">
                                 <h2 class="title__line--2">ABOUT US</h2>
                                 <div class="ft__details">
-                                    <p>At Delight Fashion, we curate quality garments blending contemporary trends with timeless elegance. Committed to authenticity and customer satisfaction, our diverse collection inspires confidence and self-expression, defining individuality with style</p>
+                                    <p>Browse sample products and try placing a demonstration order. No real purchases or payments are processed.</p>
                                     <div class="ft__social__link">
                                         <ul class="social__link">
                                             <li><a href="#"><i class="icon-social-twitter icons"></i></a></li>
@@ -85,7 +85,7 @@
                                             <a class="fr__btn" href="#">Send Mail</a>
                                         </div>
                                     </div>
-                                    
+
                                 </div>
                             </div>
                         </div>

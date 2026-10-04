@@ -1,18 +1,12 @@
-<?php 
+<?php
+require_once 'connection.inc.php';
+require_once 'functions.inc.php';
+$str = input_string($_GET, 'str', 100);
+$get_product = $str === '' ? [] : get_product($con, '', '', '', $str);
 require('top.php');
-$str=mysqli_real_escape_string($con,$_GET['str']);
-if($str!=''){
-	$get_product=get_product($con,'','','',$str);
-}else{
-	?>
-	<script>
-	window.location.href='index.php';
-	</script>
-	<?php
-}										
 ?>
 <div class="body__overlay"></div>
-        
+
         <!-- Start Bradcaump area -->
         <div class="ht__bradcaump__area" style="background: rgba(0, 0, 0, 0) url(images/bg/4.jpg) no-repeat scroll center center / cover ;">
             <div class="ht__bradcaump__wrap">
@@ -25,7 +19,7 @@ if($str!=''){
                                   <span class="brd-separetor"><i class="zmdi zmdi-chevron-right"></i></span>
                                   <span class="breadcrumb-item active">Search</span>
 								  <span class="brd-separetor"><i class="zmdi zmdi-chevron-right"></i></span>
-                                  <span class="breadcrumb-item active"><?php echo $str?></span>
+                                  <span class="breadcrumb-item active"><?php echo h($str); ?></span>
                                 </nav>
                             </div>
                         </div>
@@ -52,21 +46,21 @@ if($str!=''){
 										<div class="col-md-4 col-lg-3 col-sm-4 col-xs-12">
 											<div class="category">
 												<div class="ht__cat__thumb">
-													<a href="product.php?id=<?php echo $list['id']?>">
-														<img src="<?php echo PRODUCT_IMAGE_SITE_PATH.$list['image']?>" alt="product images">
+													<a href="product.php?id=<?php echo h($list['id']); ?>">
+														<img src="<?php echo h(PRODUCT_IMAGE_SITE_PATH.$list['image']); ?>" alt="product images">
 													</a>
 												</div>
                                                 <div class="fr__hover__info">
 										<ul class="product__action">
-											<li><a href="javascript:void(0)" onclick="wishlist_manage('<?php echo $list['id']?>','add')"><i class="icon-heart icons"></i></a></li>
-											<li><a href="javascript:void(0)" onclick="manage_cart('<?php echo $list['id']?>','add')"><i class="icon-handbag icons"></i></a></li>
+											<li><a href="javascript:void(0)" onclick="wishlist_manage('<?php echo h($list['id']); ?>','add')"><i class="icon-heart icons"></i></a></li>
+											<li><a href="javascript:void(0)" onclick="manage_cart('<?php echo h($list['id']); ?>','add')"><i class="icon-handbag icons"></i></a></li>
 										</ul>
 									</div>
 												<div class="fr__product__inner">
-													<h4><a href="product.php"><?php echo $list['name']?></a></h4>
+													<h4><a href="product.php"><?php echo h($list['name']); ?></a></h4>
 													<ul class="fr__pro__prize">
-														<li class="old__prize"><?php echo $list['mrp']?></li>
-														<li><?php echo $list['price']?></li>
+														<li class="old__prize"><?php echo h($list['mrp']); ?></li>
+														<li><?php echo h($list['price']); ?></li>
 													</ul>
 												</div>
 											</div>
@@ -77,13 +71,13 @@ if($str!=''){
                             </div>
                         </div>
                     </div>
-					<?php } else { 
+					<?php } else {
 						echo "Data not found";
 					} ?>
-                
+
 				</div>
             </div>
         </section>
         <!-- End Product Grid -->
         <!-- End Banner Area -->
-<?php require('footer.php')?>        
+<?php require('footer.php')?>

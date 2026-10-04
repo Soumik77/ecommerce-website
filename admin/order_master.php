@@ -1,59 +1,7 @@
 <?php
-require('top.inc.php');
-
-$sql="select * from users order by id desc";
-$res=mysqli_query($con,$sql);
-?>
-<div class="content pb-0">
-	<div class="orders">
-	   <div class="row">
-		  <div class="col-xl-12">
-			 <div class="card">
-				<div class="card-body">
-				   <h4 class="box-title">Order Collection</h4>
-				</div>
-				<div class="card-body--">
-				   <div class="table-stats order-table ov-h">
-					  <table class="table">
-							<thead>
-								<tr>
-									<th class="product-thumbnail">Order ID</th>
-									<th class="product-name"><span class="nobr">Order Date</span></th>
-									<th class="product-price"><span class="nobr"> Address </span></th>
-									<th class="product-stock-stauts"><span class="nobr"> Payment Type </span></th>
-									<th class="product-stock-stauts"><span class="nobr"> Payment Status </span></th>
-									<th class="product-stock-stauts"><span class="nobr"> Order Status </span></th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php
-								$res=mysqli_query($con,"select `order`.*,order_status.name as order_status_str from `order`,order_status where order_status.id=`order`.order_status");
-								while($row=mysqli_fetch_assoc($res)){
-								?>
-								<tr>
-									<td class="product-add-to-cart"><a href="order_master_detail.php?id=<?php echo $row['id']?>"> <?php echo $row['id']?></a></td>
-									<td class="product-name"><?php echo $row['added_on']?></td>
-									<td class="product-name">
-									<?php echo $row['address']?><br/>
-									<?php echo $row['city']?><br/>
-									<?php echo $row['pincode']?>
-									</td>
-									<td class="product-name"><?php echo $row['payment_type']?></td>
-									<td class="product-name"><?php echo $row['payment_status']?></td>
-									<td class="product-name"><?php echo $row['order_status_str']?></td>
-									
-								</tr>
-								<?php } ?>
-							</tbody>
-							
-						</table>
-				   </div>
-				</div>
-			 </div>
-		  </div>
-	   </div>
-	</div>
-</div>
-<?php
-require('footer.inc.php');
-?>
+require_once 'connection.inc.php'; require_admin();
+$orders = db_query('SELECT o.*, s.name AS status_name, u.name AS customer FROM `order` o JOIN order_status s ON s.id=o.order_status JOIN users u ON u.id=o.user_id ORDER BY o.id DESC')->fetch_all(MYSQLI_ASSOC);
+require('top.inc.php'); ?>
+<main class="content"><div class="card"><div class="card-body"><h1>Orders</h1><table class="table"><thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Payment</th></tr></thead><tbody>
+<?php foreach ($orders as $order): ?><tr><td><a href="order_master_detail.php?id=<?php echo (int) $order['id']; ?>"><?php echo (int) $order['id']; ?></a></td><td><?php echo h($order['customer']); ?></td><td><?php echo h($order['added_on']); ?></td><td><?php echo h($order['total_price']); ?></td><td><?php echo h($order['status_name']); ?></td><td><?php echo h($order['payment_status']); ?></td></tr><?php endforeach; ?>
+</tbody></table></div></div></main><?php require('footer.inc.php'); ?>
