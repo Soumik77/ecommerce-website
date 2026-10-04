@@ -1,24 +1,4 @@
 <?php
-require('connection.inc.php');
-require('functions.inc.php');
-
-$type=get_safe_value($con,$_POST['type']);
-$otp=get_safe_value($con,$_POST['otp']);
-if($type=='email'){
-	if($otp==$_SESSION['EMAIL_OTP']){
-		unset($_SESSION['EMAIL_OTP']);
-		echo "done";
-	}else{
-		echo "no";
-	}
-}
-
-if($type=='mobile'){
-	if($otp==$_SESSION['MOBILE_OTP']){
-		unset($_SESSION['MOBILE_OTP']);
-		echo "done";
-	}else{
-		echo "no";
-	}
-}
-?>
+http_response_code(410);
+header('Content-Type: text/plain; charset=UTF-8');
+echo 'Email recovery and OTP services are unavailable in this demonstration.';

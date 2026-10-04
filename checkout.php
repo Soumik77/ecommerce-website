@@ -1,237 +1,48 @@
-<?php 
+<?php
+require_once 'connection.inc.php';
+require_once 'functions.inc.php';
+require_once 'includes/orders.php';
+$user = require_user();
+if (empty($_SESSION['cart'])) redirect_to('cart.php');
+$error = '';
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    require_csrf();
+    try {
+        if (($_POST['payment_type'] ?? '') !== 'COD') throw new InvalidArgumentException('Only cash on delivery is available in this demonstration.');
+        $orderId = place_order((int) $user['id'], $_SESSION['cart'], $_POST);
+        unset($_SESSION['cart']);
+        $_SESSION['last_order_id'] = $orderId;
+        redirect_to('thank_you.php');
+    } catch (InvalidArgumentException $failure) {
+        $error = $failure->getMessage();
+    } catch (Throwable $failure) {
+        error_log('Checkout failed: ' . get_class($failure));
+        $error = 'Your order could not be saved. Your cart is unchanged. Please try again.';
+    }
+}
+$items = [];
+try { $items = cart_items($_SESSION['cart']); } catch (InvalidArgumentException $failure) { $error = $failure->getMessage(); }
+$total = array_sum(array_column($items, 'line_cents'));
 require('top.php');
-if(!isset($_SESSION['cart']) || count($_SESSION['cart'])==0){
-	?>
-	<script>
-		window.location.href='index.php';
-	</script>
-	<?php
-}
-
-$cart_total=0;
-
-if(isset($_POST['submit'])){
-	$address=get_safe_value($con,$_POST['address']);
-	$city=get_safe_value($con,$_POST['city']);
-	$pincode=get_safe_value($con,$_POST['pincode']);
-	$payment_type=get_safe_value($con,$_POST['payment_type']);
-	$user_id=$_SESSION['USER_ID'];
-	foreach($_SESSION['cart'] as $key=>$val){
-		$productArr=get_product($con,'','',$key);
-		$price=$productArr[0]['price'];
-		$qty=$val['qty'];
-		$cart_total=$cart_total+($price*$qty);
-		
-	}
-	$total_price=$cart_total;
-	$payment_status='pending';
-	if($payment_type=='cod'){
-		$payment_status='success';
-	}
-	$order_status='1';
-	$added_on=date('Y-m-d h:i:s');
-	
-	
-	mysqli_query($con,"insert into `order`(user_id,address,city,pincode,payment_type,payment_status,order_status,added_on,total_price) values('$user_id','$address','$city','$pincode','$payment_type','$payment_status','$order_status','$added_on','$total_price')");
-	
-	$order_id=mysqli_insert_id($con);
-	
-	foreach($_SESSION['cart'] as $key=>$val){
-		$productArr=get_product($con,'','',$key);
-		$price=$productArr[0]['price'];
-		$qty=$val['qty'];
-		
-		mysqli_query($con,"insert into `order_detail`(order_id,product_id,qty,price) values('$order_id','$key','$qty','$price')");
-	}
-	
-	unset($_SESSION['cart'])
-	?>
-	<script>
-		window.location.href='thank_you.php';
-	</script>
-	<?php
-	
-	
-}
 ?>
-
-<div class="ht__bradcaump__area" style="background: rgba(0, 0, 0, 0) url(images/bg/4.jpg) no-repeat scroll center center / cover ;">
-            <div class="ht__bradcaump__wrap">
-                <div class="container">
-                    <div class="row">
-                        <div class="col-xs-12">
-                            <div class="bradcaump__inner">
-                                <nav class="bradcaump-inner">
-                                  <a class="breadcrumb-item" href="index.php">Home</a>
-                                  <span class="brd-separetor"><i class="zmdi zmdi-chevron-right"></i></span>
-                                  <span class="breadcrumb-item active">checkout</span>
-                                </nav>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- End Bradcaump area -->
-        <!-- cart-main-area start -->
-        <div class="checkout-wrap ptb--100">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="checkout__inner">
-                            <div class="accordion-list">
-                                <div class="accordion">
-                                    
-									<?php 
-									$accordion_class='accordion__title';
-									if(!isset($_SESSION['USER_LOGIN'])){
-									$accordion_class='accordion__hide';
-									?>
-									<div class="accordion__title">
-                                        Checkout Method
-                                    </div>
-                                    <div class="accordion__body">
-                                        <div class="accordion__body__form">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="checkout-method__login">
-                                                        <form id="login-form" method="post">
-                                                            <h5 class="checkout-method__title">Login</h5>
-                                                            <div class="single-input">
-                                                                <input type="text" name="login_email" id="login_email" placeholder="Your Email*" style="width:100%">
-																<span class="field_error" id="login_email_error"></span>
-                                                            </div>
-															
-                                                            <div class="single-input">
-                                                                <input type="password" name="login_password" id="login_password" placeholder="Your Password*" style="width:100%"autocomplete="login-new-password">
-																<span class="field_error" id="login_password_error"></span>
-                                                            </div>
-															
-                                                            <p class="require"> Required fields</p>
-                                                            <div class="dark-btn">
-                                                                <button type="button" class="fv-btn" onclick="user_login()">Login</button>
-                                                            </div>
-															<div class="form-output login_msg">
-																<p class="form-messege field_error"></p>
-															</div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="checkout-method__login">
-                                                        <form action="#">
-                                                            <h5 class="checkout-method__title">Register</h5>
-                                                            <div class="single-input">
-                                                                <input type="text" name="name" id="name" placeholder="Your Name" style="width:100%">
-																<span class="field_error" id="name_error"></span>
-                                                            </div>
-															<div class="single-input">
-                                                                <input type="text" name="email" id="email" placeholder="Your Email*" style="width:100%">
-																<span class="field_error" id="email_error"></span>
-                                                            </div>
-															
-                                                            <div class="single-input">
-                                                                <input type="text" name="mobile" id="mobile" placeholder="Your Mobile" style="width:100%">
-																<span class="field_error" id="mobile_error"></span>
-                                                            </div>
-															<div class="single-input">
-                                                                <input type="password" name="password" id="password" placeholder="Your Password" style="width:100%"autocomplete="new-password">
-																<span class="field_error" id="password_error"></span>
-                                                            </div>
-                                                            <div class="dark-btn">
-                                                                <button type="button" class="fv-btn" onclick="user_register()">Register</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-									<?php } ?>
-                                   
-									<form method="post">
-                                    <div class="<?php echo $accordion_class?>">
-                                        Address Information
-                                    </div>
-										<div class="accordion__body">
-											<div class="bilinfo">
-												
-													<div class="row">
-														<div class="col-md-12">
-															<div class="single-input">
-																<input type="text" name="address" placeholder="Street Address" required>
-															</div>
-														</div>
-														<div class="col-md-6">
-															<div class="single-input">
-																<input type="text" name="city" placeholder="City/State" required>
-															</div>
-														</div>
-														<div class="col-md-6">
-															<div class="single-input">
-																<input type="text" name="pincode" placeholder="Post code/ zip" required>
-															</div>
-														</div>
-														
-													</div>
-                                            </div>
-											</div>
-									
-										<div class="<?php echo $accordion_class?>">
-											payment information
-										</div>
-										<div class="accordion__body">
-											<div class="paymentinfo">
-												<div class="single-method">
-													Cash On Delivery <input type="radio" name="payment_type" value="COD" required/>
-													&nbsp;&nbsp;Paypal <input type="radio" name="payment_type" value="payu" required/>
-												</div>
-												
-											</div>
-										</div>
-										 <input type="submit" name="submit"/>
-									</form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="order-details">
-                            <h5 class="order-details__title">Your Order</h5>
-                            <div class="order-details__item">
-                                <?php
-								$cart_total=0;
-								foreach($_SESSION['cart'] as $key=>$val){
-								$productArr=get_product($con,'','',$key);
-								$pname=$productArr[0]['name'];
-								$mrp=$productArr[0]['mrp'];
-								$price=$productArr[0]['price'];
-								$image=$productArr[0]['image'];
-								$qty=$val['qty'];
-								$cart_total=$cart_total+($price*$qty);
-								?>
-								<div class="single-item">
-                                    <div class="single-item__thumb">
-                                        <img src="<?php echo PRODUCT_IMAGE_SITE_PATH.$image?>">
-                                    </div>
-                                    <div class="single-item__content">
-                                        <a href="#"><?php echo $pname?></a>
-                                        <span class="price"><?php echo $price*$qty?></span>
-                                    </div>
-                                    <div class="single-item__remove">
-                                        <a href="javascript:void(0)" onclick="manage_cart('<?php echo $key?>','remove')"><i class="icon-trash icons"></i></a>
-                                    </div>
-                                </div>
-								<?php } ?>
-                            </div>
-                            <div class="ordre-details__total">
-                                <h5>Order total</h5>
-                                <span class="price"><?php echo $cart_total?></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        						
-<?php require('footer.php')?>   
+<main class="container" style="padding:50px 20px">
+  <h1>Checkout</h1>
+  <p>Demonstration orders only. No payment is collected.</p>
+  <?php if ($error): ?><p class="alert alert-danger" role="alert"><?php echo h($error); ?></p><?php endif; ?>
+  <div class="row"><div class="col-md-7">
+    <form method="post">
+      <?php echo csrf_field(); ?>
+      <p><label>Street address <input class="form-control" name="address" maxlength="250" required value="<?php echo h($_POST['address'] ?? ''); ?>"></label></p>
+      <p><label>City <input class="form-control" name="city" maxlength="50" required value="<?php echo h($_POST['city'] ?? ''); ?>"></label></p>
+      <p><label>Postal code <input class="form-control" name="pincode" maxlength="20" required value="<?php echo h($_POST['pincode'] ?? ''); ?>"></label></p>
+      <p><label><input type="radio" name="payment_type" value="COD" checked required> Cash on delivery</label></p>
+      <button class="btn btn-primary" type="submit" <?php echo $items ? '' : 'disabled'; ?>>Place demo order</button>
+      <a href="cart.php">Return to cart</a>
+    </form>
+  </div><div class="col-md-5">
+    <h2>Order summary</h2><table class="table"><thead><tr><th>Product</th><th>Quantity</th><th>Amount</th></tr></thead><tbody>
+    <?php foreach ($items as $item): ?><tr><td><?php echo h($item['name']); ?></td><td><?php echo h($item['cart_qty']); ?></td><td><?php echo h(money_string($item['line_cents'])); ?></td></tr><?php endforeach; ?>
+    </tbody><tfoot><tr><th colspan="2">Total</th><td><?php echo h(money_string($total)); ?></td></tr></tfoot></table>
+  </div></div>
+</main>
+<?php require('footer.php'); ?>

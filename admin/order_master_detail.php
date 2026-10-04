@@ -1,104 +1,30 @@
 <?php
-require('top.inc.php');
-$order_id=get_safe_value($con,$_GET['id']);
-if(isset($_POST['update_order_status'])){
-	$update_order_status=$_POST['update_order_status'];
-	if($update_order_status=='5'){
-		mysqli_query($con,"update `order` set order_status='$update_order_status',payment_status='Success' where id='$order_id'");
-	}else{
-		mysqli_query($con,"update `order` set order_status='$update_order_status' where id='$order_id'");
-	}
-	
+require_once 'connection.inc.php';
+require_once dirname(__DIR__) . '/includes/orders.php';
+require_admin();
+$id = positive_int($_GET['id'] ?? null);
+$order = db_one('SELECT o.*, s.name AS status_name FROM `order` o JOIN order_status s ON s.id=o.order_status WHERE o.id=?', [$id]);
+if (!$order) { http_response_code(404); exit('Order not found.'); }
+$message = '';
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    require_csrf();
+    try {
+        change_order_status($id, positive_int($_POST['order_status'] ?? null), isset($_POST['cash_received']));
+        redirect_to('admin/order_master_detail.php?id=' . $id);
+    } catch (InvalidArgumentException $error) { $message = $error->getMessage(); }
 }
+$lines = order_lines($id);
+$next = [1 => [2,4], 2 => [3,4], 3 => [5], 4 => [], 5 => []][(int) $order['order_status']];
+$statuses = db_query('SELECT * FROM order_status ORDER BY id')->fetch_all(MYSQLI_ASSOC);
+require('top.inc.php');
 ?>
-<div class="content pb-0">
-	<div class="orders">
-	   <div class="row">
-		  <div class="col-xl-12">
-			 <div class="card">
-				<div class="card-body">
-				   <h4 class="box-title">Order Detail </h4>
-				</div>
-				<div class="card-body--">
-				   <div class="table-stats order-table ov-h">
-					  <table class="table">
-								<thead>
-									<tr>
-										<th class="product-thumbnail">Product Name</th>
-										<th class="product-thumbnail">Product Image</th>
-										<th class="product-name">Qty</th>
-										<th class="product-price">Price</th>
-										<th class="product-price">Total Price</th>
-									</tr>
-								</thead>
-								<tbody>
-									<?php
-									$res=mysqli_query($con,"select distinct(order_detail.id) ,order_detail.*,product.name,product.image,`order`.address,`order`.city,`order`.pincode from order_detail,product ,`order` where order_detail.order_id='$order_id' and  order_detail.product_id=product.id GROUP by order_detail.id");
-									$total_price=0;
-									
-									$userInfo=mysqli_fetch_assoc(mysqli_query($con,"select * from `order` where id='$order_id'"));
-									
-									$address=$userInfo['address'];
-									$city=$userInfo['city'];
-									$pincode=$userInfo['pincode'];
-									
-									while($row=mysqli_fetch_assoc($res)){
-									
-									$total_price=$total_price+($row['qty']*$row['price']);
-									?>
-									<tr>
-										<td class="product-name"><?php echo $row['name']?></td>
-										<td class="product-name"> <img src="<?php echo PRODUCT_IMAGE_SITE_PATH.$row['image']?>"></td>
-										<td class="product-name"><?php echo $row['qty']?></td>
-										<td class="product-name"><?php echo $row['price']?></td>
-										<td class="product-name"><?php echo $row['qty']*$row['price']?></td>
-										
-									</tr>
-									<?php } ?>
-									<tr>
-										<td colspan="3"></td>
-										<td class="product-name">Total Price</td>
-										<td class="product-name"><?php echo $total_price?></td>
-										
-									</tr>
-								</tbody>
-							
-						</table>
-						<div id="address_details">
-							<strong>Address</strong>
-							<?php echo $address?>, <?php echo $city?>, <?php echo $pincode?><br/><br/>
-							<strong>Order Status</strong>
-							<?php 
-							$order_status_arr=mysqli_fetch_assoc(mysqli_query($con,"select order_status.name from order_status,`order` where `order`.id='$order_id' and `order`.order_status=order_status.id"));
-							echo $order_status_arr['name'];
-							?>
-							
-							<div>
-								<form method="post">
-									<select class="form-control" name="update_order_status" required>
-										<option value="">Select Status</option>
-										<?php
-										$res=mysqli_query($con,"select * from order_status");
-										while($row=mysqli_fetch_assoc($res)){
-											if($row['id']==$categories_id){
-												echo "<option selected value=".$row['id'].">".$row['name']."</option>";
-											}else{
-												echo "<option value=".$row['id'].">".$row['name']."</option>";
-											}
-										}
-										?>
-									</select>
-									<input type="submit" class="form-control"/>
-								</form>
-							</div>
-						</div>
-				   </div>
-				</div>
-			 </div>
-		  </div>
-	   </div>
-	</div>
-</div>
-<?php
-require('footer.inc.php');
-?>
+<main class="content"><div class="card"><div class="card-body"><h1>Order <?php echo $id; ?></h1>
+<p><?php echo h($order['status_name']); ?> | Payment: <?php echo h($order['payment_status']); ?></p>
+<p><?php echo h($order['address']); ?>, <?php echo h($order['city']); ?>, <?php echo h($order['pincode']); ?></p>
+<table class="table"><thead><tr><th>Product</th><th>Quantity</th><th>Unit price</th><th>Amount</th></tr></thead><tbody>
+<?php foreach ($lines as $line): ?><tr><td><?php echo h($line['name']); ?></td><td><?php echo h($line['qty']); ?></td><td><?php echo h($line['price']); ?></td><td><?php echo h(money_string(money_cents($line['price']) * $line['qty'])); ?></td></tr><?php endforeach; ?></tbody></table>
+<p>Total: <?php echo h($order['total_price']); ?></p><p role="alert"><?php echo h($message); ?></p>
+<?php if ($next): ?><form method="post"><?php echo csrf_field(); ?><label>Next status <select name="order_status" required><?php foreach ($statuses as $status): if (in_array((int) $status['id'], $next, true)): ?><option value="<?php echo (int) $status['id']; ?>"><?php echo h($status['name']); ?></option><?php endif; endforeach; ?></select></label>
+<?php if (in_array(5, $next, true)): ?><label><input type="checkbox" name="cash_received" value="1" required> Cash payment received</label><?php endif; ?>
+<button class="btn btn-primary" type="submit">Update status</button></form><?php endif; ?>
+</div></div></main><?php require('footer.inc.php'); ?>

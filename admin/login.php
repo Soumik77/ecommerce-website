@@ -1,40 +1,20 @@
-
-
 <?php
-require('connection.inc.php');
-require('functions.inc.php');
-
-
-
-$msg = ' ';
-
-if(isset($_POST['submit'])){
-    $username = get_safe_value($con, $_POST['username']);
-    
-    $password = get_safe_value($con, $_POST['password']);
-
-    $sql = "select * from admin_users where username = '$username' and password = '$password'" ;
-    $res = mysqli_query($con,$sql);
-    $count = mysqli_num_rows($res);
-     
-
-  
-    if($count>0){
+require_once __DIR__ . '/connection.inc.php';
+$msg = '';
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    require_csrf();
+    $username = input_string($_POST, 'username', 100);
+    $password = $_POST['password'] ?? '';
+    $admin = db_one('SELECT * FROM admin_users WHERE username = ?', [$username]);
+    if ($admin && is_string($password) && strlen($password) <= 72 && !str_contains($password, "\0") && password_verify($password, $admin['password'])) {
+        session_regenerate_id(true);
         $_SESSION['ADMIN_LOGIN'] = 'yes';
-        $_SESSION['ADMIN_USERNAME'] = $username;
-        header('location:categories.php');
-        die();
-       
-    }else{
-        $msg="Please enter correct login details";
+        $_SESSION['ADMIN_ID'] = (int) $admin['id'];
+        $_SESSION['ADMIN_USERNAME'] = $admin['username'];
+        redirect_to('admin/categories.php');
     }
+    $msg = 'Please enter valid login details.';
 }
-
-else{
-    $msg = ' ';
-}
-
-
 ?>
 
 <!DOCTYPE html>
@@ -62,29 +42,29 @@ else{
             <div class="login-content">
                 <div class="login-form mt-150">
                     <h1 class="" style="text-align:center;">Admin</h1>
-                    <form method="post" autocomplete="off">
+                    <form method="post" autocomplete="off"><?php echo csrf_field(); ?>
                     <div class="form-group">
     <label for="name">User Name</label>
-    <input id="name" type="text" 
+    <input id="name" type="text"
            name="username"
            class="form-control" placeholder="Enter your username" autocomplete="username" required>
 </div>
 
                         <div class="form-group">
                             <label for="password">Password</label>
-                            <input id="password" type="password" name="password" 
-                            
+                            <input id="password" type="password" name="password"
+
                             class="form-control" placeholder="Password"
                             autocomplete="Password" required>
                         </div>
                         <button type="submit" name = "submit" class="btn btn-success btn-flat m-b-30 m-t-30">Sign in</button>
-                   
+
                     </form>
                     <div class="" style="color: red; margin-top:10px;">
-                         <?php echo $msg; ?>
+                         <?php echo h($msg); ?>
                     </div>
-                  
-                   
+
+
                 </div>
             </div>
         </div>
